@@ -13,6 +13,8 @@ A powerful and user-friendly resource for spawning and managing NPC peds in your
 - Easy-to-use animation switching for placed peds
 - Clean up all spawned peds with a single click
 
+### [Showcase](https://r2.fivemanage.com/4QnxcK83j7Z2f7THHrHTP/video/PedSpawner.mp4)
+
 ## Installation
 
 1. Download the latest release from the [releases page](https://github.com/paradymlabs/pedspawner/releases) (or clone this repository)
