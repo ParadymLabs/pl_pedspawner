@@ -43,10 +43,7 @@ function PlacePed(coords, heading)
         DeleteEntity(previewPed)
     end
     
-    print("Creating ped with model:", selectedModel)
-    print("At coords:", coords.x, coords.y, coords.z)
-    print("With heading:", heading)
-    print("Animation index:", selectedAnimationIndex)
+
     
     local ped = CreatePed(4, GetHashKey(selectedModel), coords.x, coords.y, coords.z, heading or 0.0, true, true)
     
@@ -145,6 +142,33 @@ function BeginPedPlacement()
         }
     })
     
+
+    
+    lib.addKeybind({
+        name = 'place_ped',
+        description = 'Place ped',
+        defaultKey = 'RETURN',
+        onPressed = function()
+            if isPlacing and previewPed and DoesEntityExist(previewPed) then
+                local hit, coords, entity = RayCastGamePlayCamera(10.0)
+                if hit then
+                    PlacePed(coords, pedHeading)
+                end
+            end
+        end
+    })
+    
+    lib.addKeybind({
+        name = 'cancel_placement',
+        description = 'Cancel placement',
+        defaultKey = 'ESCAPE',
+        onPressed = function()
+            if isPlacing then
+                CancelPlacement()
+            end
+        end
+    })
+    
     CreateThread(function()
         while isPlacing do
             Wait(0)
@@ -152,31 +176,27 @@ function BeginPedPlacement()
             local hit, coords, entity = RayCastGamePlayCamera(10.0)
             
             if hit then
-                
                 SetEntityCoords(previewPed, coords.x, coords.y, coords.z, false, false, false, false)
                 SetEntityHeading(previewPed, pedHeading)
                 
-                if IsControlJustPressed(0, 14) then
+
+                if IsControlJustPressed(0, 14) then -- Mousewheel down
                     pedHeading = pedHeading + 15.0
                     if pedHeading >= 360.0 then pedHeading = 0.0 end
                     SetEntityHeading(previewPed, pedHeading)
-                elseif IsControlJustPressed(0, 15) then
+                elseif IsControlJustPressed(0, 15) then -- Mousewheel up
                     pedHeading = pedHeading - 15.0
                     if pedHeading < 0.0 then pedHeading = 345.0 end
                     SetEntityHeading(previewPed, pedHeading)
                 end
-                
-                if IsControlJustPressed(0, 18) then
-                    PlacePed(coords, pedHeading)
-                    break
-                end
             end
             
-            if IsControlJustPressed(0, 194) then
-                CancelPlacement()
+            if not isPlacing then
                 break
             end
         end
+        
+    
     end)
 end
 
@@ -228,6 +248,33 @@ function BeginRepositioningPed(pedData, pedIndex)
         animation = pedAnimation
     }
     
+
+    
+    lib.addKeybind({
+        name = 'confirm_reposition',
+        description = 'Confirm reposition',
+        defaultKey = 'RETURN',
+        onPressed = function()
+            if isRepositioning and previewPed and DoesEntityExist(previewPed) then
+                local hit, coords, entity = RayCastGamePlayCamera(10.0)
+                if hit then
+                    FinishRepositioningPed(coords, pedHeading)
+                end
+            end
+        end
+    })
+    
+    lib.addKeybind({
+        name = 'cancel_reposition',
+        description = 'Cancel repositioning',
+        defaultKey = 'ESCAPE',
+        onPressed = function()
+            if isRepositioning then
+                CancelRepositioningPed()
+            end
+        end
+    })
+    
     CreateThread(function()
         while isRepositioning do
             Wait(0)
@@ -238,27 +285,24 @@ function BeginRepositioningPed(pedData, pedIndex)
                 SetEntityCoords(previewPed, coords.x, coords.y, coords.z, false, false, false, false)
                 SetEntityHeading(previewPed, pedHeading)
                 
-                if IsControlJustPressed(0, 14) then
+
+                if IsControlJustPressed(0, 14) then -- Mousewheel down
                     pedHeading = pedHeading + 15.0
                     if pedHeading >= 360.0 then pedHeading = 0.0 end
                     SetEntityHeading(previewPed, pedHeading)
-                elseif IsControlJustPressed(0, 15) then -- Mouse wheel up
+                elseif IsControlJustPressed(0, 15) then -- Mousewheel up
                     pedHeading = pedHeading - 15.0
                     if pedHeading < 0.0 then pedHeading = 345.0 end
                     SetEntityHeading(previewPed, pedHeading)
                 end
-                
-                if IsControlJustPressed(0, 18) then
-                    FinishRepositioningPed(coords, pedHeading)
-                    break
-                end
             end
             
-            if IsControlJustPressed(0, 194) then
-                CancelRepositioningPed()
+            if not isRepositioning then
                 break
             end
         end
+        
+    
     end)
 end
 
@@ -394,15 +438,13 @@ function OpenSpawnDialog()
         selectedModel = input[1]
         selectedAnimationIndex = input[2] or 1
         
-        print("Selected model:", selectedModel)
-        print("Selected animation index:", selectedAnimationIndex)
+
         
         BeginPedPlacement()
     end
 end
 
--- Command to open the ped menu
-RegisterCommand('pedmenu', function()
+function OpenPedMenu()
     local options = {}
     
     table.insert(options, {
@@ -522,9 +564,22 @@ RegisterCommand('pedmenu', function()
     })
     
     lib.showContext('ped_menu')
+end
+
+
+RegisterCommand('pedmenu', function()
+    OpenPedMenu()
 end, false)
 
-RegisterKeyMapping('pedmenu', 'Open Ped Menu', 'keyboard', 'F7')
+
+lib.addKeybind({
+    name = 'open_ped_menu',
+    description = 'Open Ped Menu',
+    defaultKey = 'F7',
+    onPressed = function()
+        OpenPedMenu()
+    end
+})
 
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
@@ -542,4 +597,6 @@ AddEventHandler('onResourceStop', function(resourceName)
     if isPlacing or isRepositioning then
         lib.hideTextUI()
     end
+    
+
 end)
